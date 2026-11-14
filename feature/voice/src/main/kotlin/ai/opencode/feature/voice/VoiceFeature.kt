@@ -199,6 +199,11 @@ class VoiceFeature : Reducer<VoiceFeature.State, VoiceFeature.Action> {
          * keeps [atEarBox] in step.
          */
         val isAtEar: Boolean = false,
+        /**
+         * Android only: started from the side button (OpenCode as the phone's assistant).
+         * Delegates straight into the call's session, which holds the phone's tools.
+         */
+        val isAssistantCall: Boolean = false,
         /** The newest finished compaction the session screen has seen, by session ID. */
         val compactions: Map<String, String> = emptyMap(),
         /**
@@ -392,6 +397,7 @@ class VoiceFeature : Reducer<VoiceFeature.State, VoiceFeature.Action> {
                 viewing = viewing,
                 userSeesScreen = screenVisibility.userSeesScreen,
                 recordsLooking = usesDelegator,
+                assistant = isAssistantCall,
             )
 
         val isWorking: Boolean
@@ -626,6 +632,9 @@ class VoiceFeature : Reducer<VoiceFeature.State, VoiceFeature.Action> {
          * or retry a failed one.
          */
         data object StartIfNeeded : Action
+
+        /** Android only: the call was started from the side button; sent before it starts. */
+        data object AssistantCallMarked : Action
         data object RejoinTapped : Action
         /** A failed call's Try Again. */
         data object TryAgainTapped : Action
@@ -847,6 +856,8 @@ class VoiceFeature : Reducer<VoiceFeature.State, VoiceFeature.Action> {
             Action.StartIfNeeded -> {
                 if (!state.awaitsFirstStart) Reduced(state) else Reduced(state, Effect.send(Action.Start))
             }
+
+            Action.AssistantCallMarked -> Reduced(state.copy(isAssistantCall = true))
 
             Action.Start -> startCall(state)
 
